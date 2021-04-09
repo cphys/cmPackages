@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-BeginPackage["cStats`"];
+BeginPackage["cmStats`"];
  
 slope::usage = 
  "slope[xs, ys]

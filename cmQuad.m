@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-BeginPackage["gaussLegendreQuadrature`"];
+BeginPackage["cmQuad`"];
 
 numDif::usage = 
  "numDif[f1, f2]

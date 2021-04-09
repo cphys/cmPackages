@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-BeginPackage["cTix`"];
+BeginPackage["cmTix`"];
  
 axLab3D::usage = 
  "axLab3D[lab, rot, sty]
