@@ -39,6 +39,17 @@ linFit::usage =
 		   z  (char) varibale name for fit function
 	returns: fit-function for linear dataset. ";
 	
+			
+betheFits::usage = 
+ "betheFits[data,model,coefficients,variable,
+
+	input: data            data to be fit
+		   model           fit model
+		   coefficients    coefficients in fit equation.
+		   variable        variable in fit equation.
+		 
+	returns: fit coefficients.";
+	
 
 
 Begin["`Private`"]
@@ -56,6 +67,52 @@ rSqrd[xs_, ys_] :=
 logFit[xs_, ys_, z_] := slope[xs, ys]*Log[z] + yInt[xs, ys]
 
 linFit[xs_, ys_, z_] := slope[xs, ys]*z + yInt[xs, ys]
+
+    
+betheFits[
+  data_,
+  model_,
+  coefficients_,
+  variable_,
+  OptionsPattern[{
+  workingPrecision -> 64}]] :=
+  Module[{
+   a, b, c, d, e, n,
+   tms,
+   zs, Es, terms,
+   consts, sols,
+   dt = data,
+   ft = model,
+   cfs = coefficients,
+   var = variable,
+   wp = OptionValue[workingPrecision]},
+  
+  tms = List @@ ft;  
+  n = Length[cfs];      
+  (* z from data *)
+  zs = Table[dt[[i]][[1]], {i, Length[dt]}];
+  (* potetntial values from data *)  
+  Es = Table[dt[[i]][[2]], {i, Length[dt]}];  
+  (* list of terms to be subtracted from potential *)  
+  terms[zz_] := ft /. var -> zz;
+    
+  sols =
+   Table[
+    Flatten[
+     Values[
+      NSolve[
+       SetPrecision[
+        Table[
+         Es[[i + j]] == -terms[zs[[i + j]]], {j, 0, n - 1}], wp],
+       cfs,
+       WorkingPrecision -> wp]]],
+    {i, Length[zs] - n + 1}];  
+  Table[
+   LinearModelFit[
+      sols[[All, i]],
+      x,
+      x]["BestFitParameters"][[1]],
+   {i, n}]] 
 
 
 End[]

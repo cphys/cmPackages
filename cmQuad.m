@@ -11,10 +11,9 @@ numDif::usage =
 nPtGauss2D::usage =
  "nPtGauss2D[integrand,{x,xmin,xmax,nx},{y,ymin,ymax,ny}]
  
- 	returns: The result of a two dimensional Gauss-Legendre quadrature 
- 	where nx is the number of abscissas in the x-direction and ny is \
-the
- 	number of abscissas in the y-direction";
+	returns: The result of a two dimensional Gauss-Legendre quadrature 
+	where nx is the number of abscissas in the x-direction and ny is
+	the number of abscissas in the y-direction";
  	
 tanSinhQuad2D::usage=
  "tanShinhQuad2D[integrand,{x,xmin,xmax,nx},{y,ymin,ymax,ny}]
@@ -84,7 +83,8 @@ desired 'convergent' decimal places before stopping the integration.";
 Begin["`Private`"]
 
 << "NumericalDifferentialEquationAnalysis`"
-wper = 128;
+ParallelNeeds["NumericalDifferentialEquationAnalysis`"]
+wper = 64;
 
 (* Test the number of matching decimal places between two functions *)
 numDif[f1_, f2_] := 
@@ -95,7 +95,9 @@ nPtGauss2D[
    func_,
    tParams_?ListQ, prec_ : wper,
    uParams_?ListQ, prec_ : wper,
-   OptionsPattern[{progress -> False, prc -> wper}]] :=
+   OptionsPattern[{
+   progress -> False, 
+   workingPrecision -> wper}]] :=
   
   nPtGauss2D[func, tParams, uParams] =
    Module[{
@@ -106,11 +108,11 @@ nPtGauss2D[
       uVal = uParams[[1]],
       au = uParams[[2]], bu = uParams[[3]], nu = uParams[[4]],
       pr = OptionValue[progress],
-      prc = OptionValue[prc]},
+      prc = OptionValue[workingPrecision]},
      
      weights[n_, min_, max_] :=      
       weights[n, min, max] = 
-       GaussianQuadratureWeights[n , min, max, prec];
+       GaussianQuadratureWeights[n , min, max, prc];
      
      wt = SetPrecision[weights[nt + 1, -1, 1], prc];
      wu = SetPrecision[weights[nu + 1, -1, 1], prc];
@@ -138,16 +140,16 @@ nPtGauss2D[
 nPtGauss1D[
   integrand_,
   tParams_?ListQ, prec_ : wper,
-  OptionsPattern[{progress -> False, prc -> wper}]] :=
- 
- nPtGauss1D[integrand, tParams] =
+  OptionsPattern[{
+  progress -> False,
+  workingPrecision -> wper}]] :=
   Module[{
     wt, deltt,
     f = integrand,
     tVal = tParams[[1]],
     at = tParams[[2]], bt = tParams[[3]], nt = tParams[[4]],
     pr = OptionValue[progress],
-    prc = OptionValue[prc]},
+    prc = OptionValue[workingPrecision]},
    
    
    weights[n_, min_, max_] :=    
@@ -161,8 +163,8 @@ nPtGauss1D[
    If[pr,
     PrintTemporary[
      Row[{ProgressIndicator[Dynamic[it], {1, Length[wt]}], 
-       "Nt = " Dynamic[it]}]]]; 
-   
+       "Nt = " Dynamic[it]}]]];
+
    SetPrecision[deltt*Sum[
      wt[[it]][[2]]*
        f /. {tVal -> deltt*wt[[it]][[1]] + (bt + at)/2},
@@ -171,7 +173,9 @@ nPtGauss1D[
 tanSinhQuad1D[
    integrand_,
    tParams_?ListQ, prec_ : wper,
-   OptionsPattern[{progress -> False, prc -> wper}]] :=
+   OptionsPattern[{
+   progress -> False,
+   workingPrecision -> wper}]] :=
   
   tanSinhQuad1D[integrand, tParams] =
    Module[{
@@ -180,7 +184,7 @@ tanSinhQuad1D[
      tVal = tParams[[1]],
      at = tParams[[2]], bt = tParams[[3]], Nt = tParams[[4]],
      pr = OptionValue[progress],
-     prc = OptionValue[prc]},
+     prc = OptionValue[workingPrecision]},
    
     ht = 1/100;
     
@@ -196,9 +200,9 @@ tanSinhQuad1D[
     If[pr,
      PrintTemporary[
         Row[{ProgressIndicator[Dynamic[kt], {-Nt, Nt}], 
-          "Nt = " Dynamic[kt]}]]]; 
-          
-    N[SetPrecision[ht*deltt*Sum[wgts[kt, ht]*f/.
+          "Nt = " Dynamic[kt]}]]];
+
+     N[SetPrecision[ht*deltt*Sum[wgts[kt, ht]*f/.
      {tVal -> deltt*abscs[kt, ht]+(bt + at)/2},
      {kt,-Nt, Nt}],prc],prc]]//Quiet;  
      
@@ -206,7 +210,9 @@ tanSinhQuad2D[
    integrand_,
    tParams_?ListQ, prec_ : wper,
    uParams_?ListQ, prec_ : wper,
-   OptionsPattern[{progress -> False, prc -> wper}]] :=
+   OptionsPattern[{
+   progress -> False,
+   workingPrecision -> wper}]] :=
   
   tanSinhQuad2D[integrand, tParams, uParams] =
    Module[{
@@ -217,7 +223,7 @@ tanSinhQuad2D[
      uVal = uParams[[1]],
      au = uParams[[2]], bu = uParams[[3]], Nu = uParams[[4]],
      pr = OptionValue[progress],
-     prc = OptionValue[prc]},
+     prc = OptionValue[workingPrecision]},
     
     hu = 1/100;
     ht = 1/100;
@@ -252,7 +258,9 @@ tsglQuad2D[
    integrand_,
    tParams_?ListQ, prec_ : wper,
    uParams_?ListQ, prec_ : wper,
-   OptionsPattern[{progress -> False, prc -> wper}]] :=
+   OptionsPattern[{
+   progress -> False, 
+   workingPrecision -> wper}]] :=
   
   tsglQuad2D[integrand, tParams, uParams] =
    Module[{
@@ -263,13 +271,13 @@ tsglQuad2D[
      uVal = uParams[[1]],
      au = uParams[[2]], bu = uParams[[3]], Nu = uParams[[4]],
      pr = OptionValue[progress],
-     prc = OptionValue[prc]},
+     prc = OptionValue[workingPrecision]},
     
     hu = 1/100;
     
     weights[n_, min_, max_] :=
      weights[n, min, max] = 
-      GaussianQuadratureWeights[n , min, max, prec];
+      GaussianQuadratureWeights[n , min, max, prc];
     
     wt = weights[nt + 1, -1, 1];
     
@@ -298,10 +306,13 @@ tsglQuad2D[
         {ku, -Nu, Nu}],
       {it, Length[wt]}]]// Quiet;
       
+      
 gaussLaguerre1D[
       func_,
       tParams_?ListQ, prec_ : wper,
-      OptionsPattern[{progress -> False, prc -> wper}]] :=
+      OptionsPattern[{
+      progress -> False, 
+      workingPrecision -> wper}]] :=
   
   gaussLaguerre1D[func, tParams] =
     Module[{
@@ -310,7 +321,7 @@ gaussLaguerre1D[
       tVal = tParams[[1]],
       at = tParams[[2]], bt = tParams[[3]], nt = tParams[[4]],
       pr = OptionValue[progress],
-      prc = OptionValue[prc]},
+      prc = OptionValue[workingPrecision]},
      
      absc[n_] :=      
       absc[n] = 
@@ -344,7 +355,9 @@ gaussLaguerre2D[
       func_,
       tParams_?ListQ, prec_ : wper,
       uParams_?ListQ, prec_ : wper,
-      OptionsPattern[{progress -> False, prc -> wper}]] :=
+      OptionsPattern[{
+      progress -> False, 
+      workingPrecision -> wper}]] :=
   
   gaussLaguerre2D[func, tParams, uParams] =
     Module[{
@@ -355,7 +368,7 @@ gaussLaguerre2D[
             uVal = uParams[[1]],
             au = uParams[[2]], bu = uParams[[3]], nu = uParams[[4]],
             pr = OptionValue[progress],
-            prc = OptionValue[prc]},
+            prc = OptionValue[workingPrecision]},
      
      absc[n_] :=      
       absc[n] = 
@@ -394,7 +407,9 @@ gaussLaguerre2D[
 gaussChebyshev1D[
          func_,
          tParams_?ListQ, prec_ : wper,
-         OptionsPattern[{progress -> False, prc -> wper}]] :=  
+         OptionsPattern[{
+         progress -> False, 
+         workingPrecision -> wper}]] :=  
     gaussChebyshev1D[func, tParams] =
        Module[{
              x, wt, absc, absct, dt, deltt,
@@ -402,7 +417,7 @@ gaussChebyshev1D[
             tVal = tParams[[1]],
             at = tParams[[2]], bt = tParams[[3]], nt = tParams[[4]],
             pr = OptionValue[progress],
-            prc = OptionValue[prc]},
+            prc = OptionValue[workingPrecision]},
      
      wt =  Table[\[Pi]/nt, {i, 1, nt}];
           
@@ -428,7 +443,9 @@ gaussChebyshev2D[
          func_,
          tParams_?ListQ, prec_ : wper,
          uParams_?ListQ, prec_ : wper,
-         OptionsPattern[{progress -> False, prc -> wper}]] :=  
+         OptionsPattern[{
+         progress -> False, 
+         workingPrecision -> wper}]] :=  
     gaussChebyshev2D[func, tParams, uParams] =
        Module[{
              x, wt, wu, abscu, absct, dt, deltt, deltu,
@@ -438,7 +455,7 @@ gaussChebyshev2D[
             tVal = tParams[[1]],
             at = tParams[[2]], bt = tParams[[3]], nt = tParams[[4]],
             pr = OptionValue[progress],
-            prc = OptionValue[prc]},
+            prc = OptionValue[workingPrecision]},
      
           wt =  Table[\[Pi]/nt, {i, 1, nt}];
           wu =  Table[\[Pi]/nt, {i, 1, nu}];
@@ -471,10 +488,12 @@ gaussChebyshev2D[
          
 convergance1D[
    integrand_,
-   tParams_?ListQ, prec_ : wper,
+   tParams_?ListQ,
    nConv_,
    OptionsPattern[{range -> {0, 1},
-     method -> nPtGauss1D, progress -> True, prc -> wper}]] :=
+     method -> nPtGauss1D, 
+     progress -> True, 
+     workingPrecision -> wper}]] :=
   
   convergance1D[integrand, tParams, nConv] =
    Module[{
@@ -511,7 +530,7 @@ convergance1D[
      Do[
      If[Or[diff[dt,tInt] >= tPer, eq[dt, tInt]],
          Return[{dt, mth[f, {tVal, at, bt, dt}]}]],
-         {dt, tMin, tMax, tInt}]] // Quiet;
+       {dt, tMin, tMax, tInt}]] // Quiet;
          
      
 convergance[
@@ -519,8 +538,11 @@ convergance[
    tParams_?ListQ, prec_ : wper,
    uParams_?ListQ, prec_ : wper,
    nConv_?ListQ,
-   OptionsPattern[{range -> {{-1, 1}, {-1, 1}},
-     method -> nPtGauss2D, progress -> False, prc -> wper}]] :=
+   OptionsPattern[{
+   range -> {{-1, 1}, {-1, 1}},
+     method -> nPtGauss2D, 
+     progress -> False, 
+     workingPrecision -> wper}]] :=
   
   convergance[integrand, tParams, uParams, nConv] =
    Module[{
