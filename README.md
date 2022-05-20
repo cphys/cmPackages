@@ -1,11 +1,11 @@
 # Mathematica Packages
--  A collection of various mathematica packages which I have used for
+-  A collection of various Mathematica packages which I have used for
 calculations as well as creating plots.
 
 -  Each package contains functions which can be called once the 
 packages are [installed](https://support.wolfram.com/5648?src=mathematica).
 
-- Documentation on usage of the functions is located at the begining of 
+- Documentation on usage of the functions is located at the beginning of 
 each of the .m files.
 
 # To Do

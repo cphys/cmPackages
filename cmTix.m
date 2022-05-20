@@ -56,7 +56,15 @@ blankPowTix::usage=
 		   max (numb) maximum tick value
 		   inc (numb) increment of tick values
 	returns: Unlableled plot ticks to match linTix";
-	
+
+blankPowTixAlt::usage=
+ "blankPowTixAlt[min,max,inc]
+
+	input: min (numb) minimum tick value
+		   max (numb) maximum tick value
+		   inc (numb) increment of tick values
+	returns: Unlableled plot ticks to match linTix";
+		
 linTixSc::usage=
  "linTixSc[min,max,inc,sc]
 
@@ -130,11 +138,25 @@ ploLabs3D::usage=
 					   ie: {{20,All},{5,All}}
 	returns: Unlableled Integerplot ticks scaled by 10^sc";
 	
+canvas::usage=
+ "canvas[color_:GrayLevel[0,.35]]  
+			 create a custom colored background for a 3d plot";
+	
 cmPlot3D::usage=
  "cmPlot3D[f,{x,xMin,xMax},{y,yMin,yMax}]  
 			 usage the same as Plot3D with default style values set
 			 for use in publication ____";
 			 
+cmDensityPlot3D::usage "
+cmDensityPlot3D[f,{x,xMin,xMax},{y,yMin,yMax},{z,zMin,zMax}] 
+             usage the same as DensityPlot3D with default style values set
+			 for use in publication ____"; 
+			 
+cmDensityPlot2D::usage "
+cmDensityPlot2D[f,{x,xMin,xMax},{y,yMin,yMax}] 
+             usage the same as DensityPlot2D with default style values set
+			 for use in publication ____"; 
+		 
 fitPlot23D::usage=
  "fitPlot23D[data1, data2, model, coeffs, var,}]  
 
@@ -201,7 +223,26 @@ Table[{N[i], Null,0.0025},{i,10^(min+j*inc),10^(min+(j+1)*inc),Abs[(10^(min+(j+1
 {j,-5,10}],1]
 ],
 First]}
+
+blankPowTixAlt[min_, max_, inc_] := {
+SortBy[
+   Join[
+Table[{N[10^i], Null,0.0175},{i,min, max, inc}],
+Flatten[Table[
+Table[{N[i], Null,0.0025},{i,10^(min+j*inc),10^(min+(j+1)*inc),Abs[(10^(min+(j+1)*inc))-(10^(min+j*inc))]/10}],
+{j,-5,10}],1]
+],
+First],
+ SortBy[
+   Join[
+Table[{N[10^i], Null,0.0175},{i,min, max, inc}],
+Flatten[Table[
+Table[{N[i], Null,0.0025},{i,10^(min+j*inc),10^(min+(j+1)*inc),Abs[(10^(min+(j+1)*inc))-(10^(min+j*inc))]/10}],
+{j,-5,10}],1]
+],
+First]}
   
+      
 linTix[min_, max_, inc_] := {
   Table[{N[i], i}, {i, min, max, inc}],
   Table[{N[i], Null}, {i, min, max, inc}]}
@@ -255,9 +296,10 @@ blankLinTixScInt[min_, max_, inc_, sc_] := {
   Table[{N[i], Null}, {i, min, max, inc}],
   Table[{N[i], Null}, {i, min, max, inc}]}
 
-ploLabs3D[plt_, labs_, pos_, rot_, fs_, ipad_] :=
+ploLabs3D[plt_, labs_, pos_, rot_, fs_, ipad_:Automatic] :=
  Show[
-  Rasterize[plt, Background -> None],
+  Rasterize[plt,
+   Background -> None],
   Graphics[
    Table[
     Text[Style[
@@ -270,6 +312,27 @@ ploLabs3D[plt_, labs_, pos_, rot_, fs_, ipad_] :=
    Cases[Except[PlotRangeClipping -> True]]],
   ImagePadding -> ipad]
   
+canvas[
+  color_ : GrayLevel[0, .25]] :=
+  Module[{
+    col = color},
+    Graphics3D[{{
+      EdgeForm[],
+      col,
+      EdgeForm[None],
+      InfinitePlane[{
+        Scaled[{0, 0, 0}],
+        Scaled[{0, 1, 0}],
+        Scaled[{1, 1, 0}]}],
+      InfinitePlane[{
+        Scaled[{0, 0, 0}],
+        Scaled[{0, 0, 1}],
+        Scaled[{0, 1, 1}]}],
+      InfinitePlane[{
+        Scaled[{0, 1, 0}],
+        Scaled[{0, 1, 1}],
+        Scaled[{1, 1, 1}]}]}}]];
+  
 cmPlot3D[
   fun_,
   xValues_,
@@ -277,49 +340,300 @@ cmPlot3D[
   OptionsPattern[{
     ticksStyle -> Table[{Black,labStyle[20]}, {i, 3}],
     workingPrecision -> MachinePrecision,
-    performanceGoal->"Quality",
+    performanceGoal -> "Quality",
+    plotTheme -> "Detailed",
     labelStyle -> labStyle[20],
     axesStyle -> labStyle[20],
     axesLabel -> {"", "", ""},
+    labelRotation -> {-\[Pi]/10, 9 \[Pi]/40, \[Pi]/2},
     plotStyle -> Automatic,
     plotRange -> {Automatic, Automatic, Full},
     scalingFunctions->{"Linear","Linear","Linear"},
-    ticks -> Automatic}]] := 
+    ticks -> Automatic,
+    plotLegends -> None,
+    plotPoints -> 500,
+    imageSize -> 450,
+    mesh -> None,
+    clippingStyle -> None,
+    boxRatios -> {1, .75, 1},
+    viewPoint -> {8.64566, -12.5664, 6.88637}}]] := 
  Module[{
    labs,
    xs = xValues,
    ys = yValues,
    ts = OptionValue[ticksStyle],
-   pg= OptionValue[performanceGoal], 
+   pg = OptionValue[performanceGoal],
+   pt = OptionValue[plotTheme], 
    wp = OptionValue[workingPrecision],
    sf = OptionValue[scalingFunctions],
    ls = OptionValue[labelStyle],
    as = OptionValue[axesStyle],
    ax = OptionValue[axesLabel],
+   lr = OptionValue[labelRotation],
    ps = OptionValue[plotStyle],
    pr = OptionValue[plotRange],
-   tx = OptionValue[ticks]},
+   tx = OptionValue[ticks],
+   me = OptionValue[mesh],
+   br = OptionValue[boxRatios],
+   pl = OptionValue[plotLegends],
+   pp = OptionValue[plotPoints],
+   is = OptionValue[imageSize],
+   cl = OptionValue[clippingStyle],
+   vp = OptionValue[viewPoint]},
   
-  labs = axLab3D[ax, {-\[Pi]/10, 9 \[Pi]/40, \[Pi]/2}, as];
+  labs = axLab3D[ax,lr, as];
   
   Plot3D[fun, xs, ys,
-   PlotTheme -> "Detailed",
+   PlotTheme -> pt,
    PlotStyle -> ps,
-   BoxRatios -> {1, .75, 1},
-   ViewPoint -> {8.64566, -12.5664, 6.88637},
+   BoxRatios -> br,
+   ViewPoint -> vp,
    PlotRange -> pr,
-   ImageSize -> 450,
-   ClippingStyle -> None,
+   ImageSize -> is,
+   ClippingStyle -> cl,
    TicksStyle -> ts,
    Ticks -> tx,
    AxesLabel -> labs,
    LabelStyle -> ls,
    ScalingFunctions->sf,
-   PlotLegends -> None,
+   PlotLegends -> pl,
    WorkingPrecision->wp,
-   PlotPoints -> 500,
-   Mesh -> None,
+   PlotPoints -> pp,
+   Mesh -> me,
    PerformanceGoal -> pg]]
+   
+cmDensityPlot3D[
+    \[Psi]Full_,
+    xValues_,
+    yValues_,
+    zValues_,
+    OptionsPattern[{
+      performanceGoal -> "Quality",
+      colorFunction -> "SunsetColors",
+      plotTheme -> "Detailed",
+      labelStyle -> {
+        FontFamily -> "TeX Gyre Heros",
+        FontSize -> 24,
+        FontColor -> Black},
+      plotRange -> Full,
+      ticks -> Automatic,
+      plotLegends -> None,
+      legendLabel -> None,
+      legendLayout -> "Column",
+      labelingFunction -> (
+        ScientificForm[
+        (5.29177`*^-11)^-3*#1, {64, 1},
+        NumberPadding -> {"", "0"}] &),
+      plotPoints -> {50, 50, 50},
+      imageSize -> 550,
+      axesLabel -> None,
+      viewPoint -> {8, -7, 3.5},
+      background -> White,
+      canvasColor -> GrayLevel[0, 0]}]] := 
+    Module[{
+      norm2,
+      aoM, hbeV, cmM,
+      zsc, zV, xV, yV,
+      xinc, yinc, zinc,
+      NPlot2, data3d,
+      min, max,
+      xVar = xValues[[1]], xmin = xValues[[2]], xmax = xValues[[3]],
+      yVar = yValues[[1]], ymin = yValues[[2]], ymax = yValues[[3]],
+      zVar = zValues[[1]], zmin = zValues[[2]], zmax = zValues[[3]],
+      pg = OptionValue[performanceGoal],
+      cf = OptionValue[colorFunction],
+      pt = OptionValue[plotTheme],
+      ls = OptionValue[labelStyle],
+      pr = OptionValue[plotRange],
+      tx = OptionValue[ticks],
+      pl = OptionValue[plotLegends],
+      ll = OptionValue[legendLabel],
+      ly = OptionValue[legendLayout],
+      lf = OptionValue[labelingFunction],
+      pp = OptionValue[plotPoints],
+      is = OptionValue[imageSize],
+      vp = OptionValue[viewPoint],
+      bg = OptionValue[background],
+      xl = OptionValue[axesLabel],
+      cc = OptionValue[canvasColor]},
+      
+    aoM = 5.2917699999999994`*^-11;
+    hbeV = 6.582119568999999`*^-16;
+    cmM = 3*10^8;
+    
+    xinc = ((xmax - xmin)/pp[[1]]);
+    yinc = ((ymax - ymin)/pp[[2]]);
+    zinc = ((zmax - zmin)/pp[[3]]);
+    
+    norm2 = Values[Flatten[
+            NSolve[
+              a^2*Integrate[
+              Re[Conjugate[\[Psi]Full]*\[Psi]Full],
+              {xVar, -\[Infinity], \[Infinity]},
+              {yVar, -\[Infinity], \[Infinity]},
+              {zVar, -\[Infinity], \[Infinity]}] == 1,a]]][[-1]];
+              
+    (* Square of the wave function *)
+    NPlot2[ix_, iy_, iz_] :=   
+      norm2^2* Re@(Conjugate[\[Psi]Full]*\[Psi]Full)  /. {xVar -> ix, 
+          yVar -> iy, zVar -> iz};
+    
+     (* Create the numerical data for the plot *)
+    data3d =
+      Flatten[
+        N@Table[
+            {ix,
+              iy,
+              iz,
+              NPlot2[ix, iy, iz] // Quiet},
+            {ix, xmin, xmax, xinc},
+            {iy, ymin, ymax, yinc},
+            {iz, zmin, zmax, zinc}], 2];
+    
+    min = First@Flatten@MinimalBy[data3d[[All, {4}]], Last];
+    max = First@Flatten@MaximalBy[data3d[[All, {4}]], Last];
+    
+    Show[{
+    ListDensityPlot3D[
+       data3d,
+      ColorFunctionScaling -> False,
+      ColorFunction -> (ColorData[cf]@
+              Rescale[#1, {min, max}, {0, 1}] &),
+      PerformanceGoal -> pg,
+      PlotTheme -> pt,
+      PlotRange -> pr,
+      PlotLegends ->
+        Evaluate[
+          BarLegend[
+            {(ColorData[cf]@Rescale[#1, {min, max}, {0, 1}] &),
+              {0, max}},
+            LabelStyle -> ls,
+            Background -> bg,
+            LabelingFunction -> lf,
+            LegendLayout -> ly,
+            LegendLabel -> ll]],
+      AxesLabel -> xl,
+      LabelStyle -> ls,
+      Ticks -> tx,
+      ViewPoint -> vp,
+      ImageSize -> is,
+      Background -> bg
+      ],
+      canvas[cc]}]]
+      
+cmDensityPlot2D[
+        \[Psi]Full_,
+        xValues_,
+        yValues_,
+        OptionsPattern[{
+              performanceGoal -> "Quality",
+              colorFunction -> "SunsetColors",
+              plotTheme -> "Detailed",
+              labelStyle -> {
+                FontFamily -> "TeX Gyre Heros",
+                FontSize -> 30,
+                FontColor -> White},
+              plotRange -> Full,
+              ticks -> Automatic,
+              legendLabel -> None,
+              legendLayout -> Automatic,
+              labelingFunction -> (
+                    ScientificForm[
+                       (5.29177`*^-11)^-3*#1, {64, 1},
+                       NumberPadding -> {"", "0"}] &),
+              plotPoints -> {125, 125},
+              imageSize -> 500,
+              frameLabel -> None,
+              background -> Black,
+              aspectRatio -> 1}]] := 
+      Module[{
+            norm2,
+            aoM, hbeV, cmM,
+            zsc, zV, xV, yV,
+            xinc, yinc, zinc,
+            NPlot2, dataxz, makeTicks,
+            min, max,
+            xVar = xValues[[1]],
+            xmin = xValues[[2]],
+            xmax = xValues[[3]],
+            yVar = yValues[[1]],
+            ymin = yValues[[2]],
+            ymax = yValues[[3]],
+            pg = OptionValue[performanceGoal],
+            cf = OptionValue[colorFunction],
+            pt = OptionValue[plotTheme],
+            ls = OptionValue[labelStyle],
+            pr = OptionValue[plotRange],
+            tx = OptionValue[ticks],
+            ll = OptionValue[legendLabel],
+            ly = OptionValue[legendLayout],
+            lf = OptionValue[labelingFunction],
+            pp = OptionValue[plotPoints],
+            is = OptionValue[imageSize],
+            bg = OptionValue[background],
+            fl = OptionValue[frameLabel],
+            ar = OptionValue[aspectRatio]},
+          
+        aoM = 5.2917699999999994`*^-11;
+        hbeV = 6.582119568999999`*^-16;
+        cmM = 3*10^8;
+        
+        xinc = ((xmax - xmin)/pp[[1]]);
+        yinc = ((ymax - ymin)/pp[[2]]);
+        
+        norm2 = Values[Flatten[NSolve[
+                               a^2*Integrate[
+                                  Re[Conjugate[\[Psi]Full]*\[Psi]Full],
+                                  {xVar, -\[Infinity], \[Infinity]},
+                                  {yVar, -\[Infinity], \[Infinity]}] == 1, a]]][[-1]];
+                  
+        (* Square of the wave function *)
+        
+  NPlot2[ix_, iy_] :=   
+            norm2^2* 
+          Re@(Conjugate[\[Psi]Full]*\[Psi]Full)  /. {xVar -> ix, 
+     yVar -> iy};
+        
+       (* Create the numerical data for the plot *)
+       dataxz =
+            Flatten[
+                N@Table[
+                        {ix,
+                          iy,
+                          Re@NPlot2[ix, iy] // Quiet},
+                        {ix, xmin, xmax, xinc},
+                        {iy, ymin, ymax, yinc}], 1];
+    
+    min = First@Flatten@MinimalBy[dataxz[[All, {3}]], Last];
+    max = First@Flatten@MaximalBy[dataxz[[All, {3}]], Last];
+    makeTicks[range_, num_] := Rescale[#, {1, num}, range] & /@ Range[num];
+    
+    ListDensityPlot[
+      dataxz,
+      LabelStyle -> ls,
+      ColorFunctionScaling -> False,
+      ColorFunction -> (ColorData[cf]@Rescale[#1, {min, max}, {0, 1}] &),
+      Background -> bg,
+      PerformanceGoal -> pg,
+      PlotTheme -> pt,
+      PlotRange -> pr,
+      AspectRatio -> ar,
+      FrameLabel -> fl,
+      FrameTicks -> tx,
+      ImageSize -> is,
+      PlotLegends ->
+        Placed[
+          BarLegend[
+            {(ColorData[cf]@Rescale[#1, {min, max}, {0, 1}] &), {0, max}},
+            LabelStyle -> {
+           FontFamily -> "TeX Gyre Heros",
+           FontSize -> 22,
+           FontColor -> White},
+        Ticks -> makeTicks[{0, .88*max}, 4],
+        LegendLayout -> ly,
+        Background -> bg,
+        LabelingFunction -> lf,
+        LegendLabel -> ll], {Above, Right}]]]
    
    
 fitPlot23D[data1_, data2_, model_, coeffs_, var_,
